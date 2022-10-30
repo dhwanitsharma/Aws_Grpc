@@ -4,7 +4,6 @@ import scala.concurrent.{ExecutionContext, Future}
 import io.grpc.{ManagedChannel, ManagedChannelBuilder, Server, ServerBuilder, StatusRuntimeException}
 import Log.{LogProcessorGrpc, LogProto, LogReply, LogRequest}
 
-import scala.util.{Failure, Success, Try}
 import com.typesafe.config.{Config, ConfigFactory}
 import scalaj.http.{Http, HttpOptions}
 import org.json4s.jackson.JsonMethods._
@@ -14,6 +13,7 @@ class grpcServer (executionContext: ExecutionContext) {
 
   private[this] var server: Server = null
   private val logger = Logger.getLogger(classOf[grpcServer].getName)
+  val TWENTY_SECONDS = 20000
 
 
   private def start(): Unit = {
@@ -38,7 +38,7 @@ class grpcServer (executionContext: ExecutionContext) {
         s"""{"time" :"${request.time}",
            |"interval" :"${request.interval}",
            |"pattern" :"${request.pattern}"}""".stripMargin
-      val resp = Http(grpcServer.url).postData(data).header("content-type", "application/json").option(HttpOptions.readTimeout(20000))
+      val resp = Http(grpcServer.url).postData(data).header("content-type", "application/json").option(HttpOptions.readTimeout(TWENTY_SECONDS))
       val jsonData = parse(resp.asString.body).values.asInstanceOf[Map[String, String]]
       println(jsonData)
       val reply = LogReply(message = jsonData("hash"))
@@ -50,8 +50,9 @@ class grpcServer (executionContext: ExecutionContext) {
 
 object grpcServer {
   val logger: Logger = Logger.getLogger(classOf[App].getName)
-  val port = 8081
+
   val user_config: Config = ConfigFactory.load("S3.conf")
+  val port = user_config.getString("grpc.port").toInt
   val url = (user_config.getString("S3Conf.url"))
   val bucket = (user_config.getString("S3Conf.Bucket"))
   val key = (user_config.getString("S3Conf.Key"))

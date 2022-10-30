@@ -8,11 +8,14 @@ import java.util.concurrent.TimeUnit
 
 
   object grpcClient {
+    val user_config: Config = ConfigFactory.load("S3.conf")
     val logger = Logger.getLogger(classOf[grpcClient].getName)
-    val port = 8081
-    val time ="2022-10-28-19-22-00:000"
-    val interval = "2"
-    val pattern = "Rsxg"
+    val grpc_config: Config = ConfigFactory.load("S3.grpc")
+    val port = user_config.getString("grpc.port").toInt
+    val time = user_config.getString("grpc.time")
+    val interval = user_config.getString("grpc.interval")
+    val pattern = user_config.getString("grpc.detect_patter")
+    val host = user_config.getString("grpc.host")
 
 
     def apply(host: String, port: Int): grpcClient = {
@@ -29,7 +32,7 @@ import java.util.concurrent.TimeUnit
     def main(args: Array[String]): Unit = {
       logger.info("Starting grpcClient:" + "" +
         "port\t: " + port)
-      val client = grpcClient("localhost", port)
+      val client = grpcClient(host, port)
       try client.find(interval, time, pattern)
       finally client.shutdown()
     }
