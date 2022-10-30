@@ -5,7 +5,6 @@ import com.amazonaws.regions.Regions
 import com.amazonaws.services.s3.model.{GetObjectRequest}
 import org.joda.time.LocalDateTime
 
-
 import java.io.{BufferedReader, InputStreamReader}
 import java.security.MessageDigest
 import java.text.SimpleDateFormat

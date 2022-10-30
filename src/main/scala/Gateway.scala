@@ -26,7 +26,7 @@ class Gateway extends RequestHandler[APIGatewayProxyRequestEvent, APIGatewayProx
         .withIsBase64Encoded(false)
         .withBody(
           s"""{
-          "hash":${resp}
+          "hash":"${resp}"
         }""")
     }
     apiResponse
