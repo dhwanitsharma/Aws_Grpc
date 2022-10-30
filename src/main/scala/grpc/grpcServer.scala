@@ -8,6 +8,10 @@ import com.typesafe.config.{Config, ConfigFactory}
 import scalaj.http.{Http, HttpOptions}
 import org.json4s.jackson.JsonMethods._
 
+/**
+ * gRPC server
+ * @param executionContext
+ */
 class grpcServer (executionContext: ExecutionContext) {
   self =>
 
@@ -15,7 +19,9 @@ class grpcServer (executionContext: ExecutionContext) {
   private val logger = Logger.getLogger(classOf[grpcServer].getName)
   val TWENTY_SECONDS = 20000
 
-
+  /**
+   * Function to start the server
+   */
   private def start(): Unit = {
     server = ServerBuilder.forPort(grpcServer.port).addService(LogProcessorGrpc.bindService(new Logimpl, executionContext)).build.start()
     logger.info("Server started, listening on " + grpcServer.port)
@@ -26,12 +32,21 @@ class grpcServer (executionContext: ExecutionContext) {
     }
   }
 
+  /**
+   * Function to stop the server
+   */
   private def stop(): Unit =
     if (server != null) server.shutdown()
 
+  /**
+   * Function to block
+   */
   private def blockUntilShutdown(): Unit =
     if (server != null) server.awaitTermination()
 
+  /**
+   * Overwriting the findLog function for the protobuf
+   */
   class Logimpl extends LogProcessorGrpc.LogProcessor {
     override def findLog(request: LogRequest): Future[LogReply] = {
       val data   =
@@ -57,6 +72,10 @@ object grpcServer {
   val bucket = (user_config.getString("S3Conf.Bucket"))
   val key = (user_config.getString("S3Conf.Key"))
 
+  /**
+   * Main server function
+   * @param args : array of inputs
+   */
   def main(args: Array[String]): Unit = {
     val server = new grpcServer(ExecutionContext.global)
     server.start

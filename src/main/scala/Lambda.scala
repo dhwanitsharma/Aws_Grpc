@@ -2,13 +2,14 @@ import com.typesafe.config.{Config, ConfigFactory}
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import com.amazonaws.regions.Regions
-import com.amazonaws.services.s3.model.{GetObjectRequest}
+import com.amazonaws.services.s3.model.GetObjectRequest
 import org.joda.time.LocalDateTime
 
 import java.io.{BufferedReader, InputStreamReader}
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.math.BigInteger
+import java.time.LocalTime
 import scala.collection.mutable.ListBuffer
 import java.util.regex.Pattern
 
@@ -17,22 +18,43 @@ class Lambda {
 
 }
 
+/**Lambda Object
+ *
+ * This is the Lambda function which access the S3 bucket to match the pattern of the logs.
+ *
+ *
+ */
 object Lambda{
   val NINE = 9
   val FIVE = 5
   val TWO = 2
   val ZERO = 0
   val ONE = 1
-  //def main(args: Array[String]): Unit = {
-  def lambdaFunction(interval:Int, time:String, pattern:String): String={
+  val MD5 = "MD5"
+  val FALSE = "false"
+  val TIMESTAMP_FULL = "yyyy:MM:dd:hh:mm:ss:sss"
+  val TIMESTAMP_MILLI = "HH:mm:ss.SSS"
 
+
+  /**Lambda Function
+   *
+   * This is the Lambda function checks the log files in the time interval for pattern matching logs
+   *
+   * @param interval: Time interval, format:"00:01:00"
+   * @param time : Sepecific Time for search, format : "2022-10-28-19-22-00:000"
+   * @param pattern : Specific regex pattern to search for logs, format : [a-zA-Z0-9_]
+   *
+   */
+  def lambdaFunction(interval:String, time:String, pattern:String): String={
     val Timeinput = time.replace("-",":")
-    val format = new java.text.SimpleDateFormat("yyyy:MM:dd:hh:mm:ss:sss")
+    val format = new java.text.SimpleDateFormat(TIMESTAMP_FULL)
     val DateTime = format.parse(Timeinput)
-    val x = LocalDateTime.fromDateFields(DateTime)
-    val start =x.minusMinutes(interval)
-    val end = x.plusMinutes(interval)
-
+    val localDate = LocalDateTime.fromDateFields(DateTime)
+    val interval_time = LocalTime.parse(interval)
+    //To find Start Time and End Time for the given Time
+    val start = localDate.minusHours(interval_time.getHour).minusMinutes(interval_time.getMinute).minusSeconds(interval_time.getSecond())
+    val end = localDate.plusHours(interval_time.getHour).plusMinutes(interval_time.getMinute).plusSeconds(interval_time.getSecond())
+    // To find the starting/ending hour and minutes of the interval
     val starting_hr = start.getHourOfDay
     val starting_min = start.getMinuteOfHour
     val ending_hr = end.getHourOfDay
@@ -40,19 +62,25 @@ object Lambda{
     val startingTime = start.toLocalTime.toString()
     val endingTime = end.toLocalTime.toString()
 
-    val dateFormatter = new SimpleDateFormat("HH:mm:ss.SSS")
+    //Loading the S3 creds and Data
+    val dateFormatter = new SimpleDateFormat(TIMESTAMP_MILLI)
     val user_config: Config = ConfigFactory.load("S3.conf")
     val bucket = (user_config.getString("S3Conf.Bucket"))
     val key = (user_config.getString("S3Conf.Key"))
     val secret = (user_config.getString("S3Conf.Secret"))
-
     val creds = new BasicAWSCredentials(key, secret)
     val s3: AmazonS3 = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(creds)).withRegion(Regions.US_EAST_2).build()
     val files = new ListBuffer[String]()
     val list = s3.listObjects(bucket);
-    val obj = list.getObjectSummaries
+    val objSummary = list.getObjectSummaries
 
-    obj.iterator().forEachRemaining(x=>{
+    /**
+     * Code to find the list of files which fall inside our time interval
+     * Example :
+     * TIME : 21:00:00, Interval : 00:05:00
+     * Files which will have logs of 20:55:00 to 21:05:00 will be picked in the list
+     */
+    objSummary.iterator().forEachRemaining(x=>{
       val timeTemp = x.getKey.takeRight(NINE).take(FIVE)
       val hr = timeTemp.take(TWO).toInt
       val min = timeTemp.takeRight(TWO).toInt
@@ -62,6 +90,12 @@ object Lambda{
       }
     })
 
+    /**
+     * The time in the log files is used to create an array of Interger time,
+     * to find the time splice for the interval.
+     * This search of the time splice is done by Binary Search, leading to search
+     * time of index to O(log(n))
+     */
     files.foreach(x=>{
       val file = s3.getObject(new GetObjectRequest(bucket, x))
       val reader = new BufferedReader(new InputStreamReader(file.getObjectContent()))
@@ -76,6 +110,9 @@ object Lambda{
       val endIndex = RecursiveBinarySearch(timeStmpArray,endTime.toInt)()
       val spliced =lines.slice(startIndex,endIndex)
 
+      /**
+       * Pattern matching to find the pattern in the log messages
+       */
       val patternReg = Pattern.compile(pattern)
       spliced.foreach(x=>{
         val splitArray = x.split(" ")
@@ -85,9 +122,21 @@ object Lambda{
         }
       })
     })
-    "false"
+    return FALSE
   }
 
+  /**Recursive Binary Search
+   *
+   * This is a recursive binary search to find the closest value in the array to the target value
+   *
+   * @param arr: Input Array
+   * @param target : the target value to search in the array
+   * @param low : not to be used
+   * @param high : not to be used
+   *
+   * @return Int : Index of the Target
+   *
+   */
   def RecursiveBinarySearch(arr: Array[Int],
                             target: Int)
                            (low: Int = 0,
@@ -129,13 +178,30 @@ object Lambda{
     }
     return mid;
   }
-
+  /**Closest Value
+   *
+   * This is a function which gets the index of the closes value of the target
+   *
+   * @param arr: Input Array
+   * @param target : the target value to search in the array
+   * @param low : not to be used
+   * @param high : not to be used
+   *
+   * @return Index of the value closest to target
+   */
   def getClosest(arr: Array[Int], val1: Int, val2: Int, target: Int): Int = if (target - arr(val1) >= arr(val2) - target) val2
   else val1
 
-
+  /**MD5 Hash Function
+   *
+   * This function returns MD5 encoded hash value of a String
+   *
+   * @param s: String input
+   *
+   * @return String : Hashed Value
+   */
   def md5(s: String) = {
-    val digest = MessageDigest.getInstance("MD5").digest(s.getBytes)
+    val digest = MessageDigest.getInstance(MD5).digest(s.getBytes)
     val bigInt = new BigInteger(1, digest)
     val hashedString = bigInt.toString(16)
     hashedString

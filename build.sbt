@@ -21,6 +21,7 @@ val typesafeConfigVersion = "1.4.1"
 val awsjavas3Version = "1.12.98"
 val logbackVersion = "1.3.0-alpha10"
 val apacheCommonIOVersion = "2.11.0"
+val sfl4sVersion = "2.0.0-alpha5"
 
 libraryDependencies ++= Seq(
   "com.typesafe" % "config" % typesafeConfigVersion,
@@ -37,4 +38,7 @@ libraryDependencies ++= Seq(
   "org.scalatest"%%"scalatest"%"3.2.14"%Test,
   "org.scalatest"%%"scalatest-featurespec"%"3.2.14"%Test,
   "commons-io" % "commons-io" % apacheCommonIOVersion,
+  "ch.qos.logback"%"logback-classic"%"1.4.1",
+  "ch.qos.logback"%"logback-core"%"1.4.1",
+  "org.slf4j" % "slf4j-api" % sfl4sVersion,
 )

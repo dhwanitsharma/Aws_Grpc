@@ -5,8 +5,9 @@ import java.util.logging.{Level, Logger}
 import com.typesafe.config.{Config, ConfigFactory}
 import java.util.concurrent.TimeUnit
 
-
-
+/**
+ * gRPC Client object to call the server
+ */
   object grpcClient {
     val user_config: Config = ConfigFactory.load("S3.conf")
     val logger = Logger.getLogger(classOf[grpcClient].getName)
@@ -37,14 +38,27 @@ import java.util.concurrent.TimeUnit
       finally client.shutdown()
     }
   }
+
+/**
+ * gRPC Client class to call the server
+ */
 class grpcClient(private val channel: ManagedChannel,private val blockingStub: LogProcessorGrpc.LogProcessorBlockingStub){
   val logger = Logger.getLogger(classOf[grpcClient].getName)
 
+  /**
+   * function to shutdown the client
+   */
   def shutdown(): Unit = {
     logger.info("Trying to shutdown")
     channel.shutdown.awaitTermination(20.toLong, TimeUnit.SECONDS)
   }
 
+  /**
+   * Function to call the GRPC server
+   * @param interval : Time interval
+   * @param time : Specific time
+   * @param pattern : Pattern to match the log messages
+   */
   def find(interval: String, time: String, pattern: String): Unit = {
     val request = LogRequest(time, interval, pattern)
     logger.info("Request created")
