@@ -65,13 +65,13 @@ object Lambda{
     //Loading the S3 creds and Data
     val dateFormatter = new SimpleDateFormat(TIMESTAMP_MILLI)
     val user_config: Config = ConfigFactory.load("S3.conf")
-    val bucket = (user_config.getString("S3Conf.Bucket"))
-    val key = (user_config.getString("S3Conf.Key"))
-    val secret = (user_config.getString("S3Conf.Secret"))
+    val bucket = user_config.getString("S3Conf.Bucket")
+    val key = user_config.getString("S3Conf.Key")
+    val secret = user_config.getString("S3Conf.Secret")
     val creds = new BasicAWSCredentials(key, secret)
     val s3: AmazonS3 = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(creds)).withRegion(Regions.US_EAST_2).build()
     val files = new ListBuffer[String]()
-    val list = s3.listObjects(bucket);
+    val list = s3.listObjects(bucket)
     val objSummary = list.getObjectSummaries
 
     /**
@@ -102,10 +102,10 @@ object Lambda{
       val lines = reader.lines().toArray().map(_.asInstanceOf[String])
       val timeStmpArray = lines.map(x=>{
         val spt = x.split(" ")
-        val date = ((dateFormatter.parse(spt.head)).getTime)
+        val date = dateFormatter.parse(spt.head).getTime
         date.toInt})
-      val startTime = (dateFormatter.parse(startingTime)).getTime
-      val endTime = (dateFormatter.parse(endingTime)).getTime
+      val startTime = dateFormatter.parse(startingTime).getTime
+      val endTime = dateFormatter.parse(endingTime).getTime
       val startIndex = RecursiveBinarySearch(timeStmpArray,startTime.toInt)()
       val endIndex = RecursiveBinarySearch(timeStmpArray,endTime.toInt)()
       val spliced =lines.slice(startIndex,endIndex)
@@ -145,15 +145,15 @@ object Lambda{
 
     //left-side case
     if (target <= arr(0))
-      return 0;
+      return 0
     //right-side case
     if (target >= arr(high - 1))
-      return high - 1;
+      return high - 1
 
-    val mid = (low + high) / 2;
+    val mid = (low + high) / 2
 
     if (arr(mid) == target)
-      return mid;
+      return mid
 
     /* If target is less than array element,
         then search in left */
@@ -162,9 +162,9 @@ object Lambda{
       if (mid > 0 && target > arr(mid - 1)) {
         return getClosest(arr,mid - 1,
           mid, target)
-      };
+      }
       else
-        RecursiveBinarySearch(arr,target)(0,mid.toInt)
+        RecursiveBinarySearch(arr,target)(0,mid)
     }
     /* Repeat for left half */
 
@@ -172,11 +172,11 @@ object Lambda{
     else {
       if (mid < high && target < arr(mid + 1))
         return getClosest(arr,mid,
-          mid + 1, target);
+          mid + 1, target)
       else
         RecursiveBinarySearch(arr,target)(mid+1,high)
     }
-    return mid;
+    return mid
   }
   /**Closest Value
    *
