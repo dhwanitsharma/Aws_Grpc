@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+service LogProcessor {
+  rpc FindLog(LogRequest) returns (LogReply) {}
+}
+
+message LogRequest {
+  string time=1;
+  string interval=2;
+  string pattern=3;
+}
+
+message LogReply {
+  string message = 1;
+}
