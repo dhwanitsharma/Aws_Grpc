@@ -15,6 +15,8 @@ What is a Lambda Function?
 
 Lambda is a compute service that lets you run code without provisioning or managing servers. Lambda runs your code on a high-availability compute infrastructure and performs all of the administration of the compute resources, including server and operating system maintenance, capacity provisioning and automatic scaling, and logging. With Lambda, you can run code for virtually any type of application or backend service.
 
+Link to the video : <a href="https://youtu.be/hTdQP7JUfa0" target="_blank">Video</a>
+
 ## Project Structure
 The project structure is as follows:
 1. Src
@@ -148,4 +150,4 @@ The output will be as follows:
 
 ## AWS Deployment
 As shown in the video, build the file using ```sbt clean compile assembly``` to build the jar. The jar is then uploaded to the Lambda function. Use the instruction in the video to set
-and test the Lambda function.
+and test the Lambda function. Video for the project <a href="https://youtu.be/hTdQP7JUfa0" target="_blank">Video</a> 
