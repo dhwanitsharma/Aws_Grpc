@@ -91,6 +91,13 @@ object Lambda{
     })
 
     /**
+     * If the file list for the interval is empty, return FALSE.
+     */
+    if(files.isEmpty){
+      return FALSE
+    }
+
+    /**
      * The time in the log files is used to create an array of Interger time,
      * to find the time splice for the interval.
      * This search of the time splice is done by Binary Search, leading to search

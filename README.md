@@ -38,6 +38,59 @@ The project structure is as follows:
             2. TestPattern.scala
 
 ## Installation Instructions
+### Task 1 : Upload the LogGenerator into a EC2 instance
+Create an EC2 instance as shown in the video and run the following commands to setup java and sbt
+1. For Java:
+```
+sudo su –
+apt-get update
+apt-get upgrade
+apt install openjdk-17-jdk openjdk-17-jre
+```
+2. For sbt:
+```
+sudo apt-get update
+sudo apt-get install apt-transport-https curl gnupg -yqq
+echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | sudo tee /etc/apt/sources.list.d/sbt.list
+echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | sudo tee /etc/apt/sources.list.d/sbt_old.list
+curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | sudo -H gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/scalasbt-release.gpg --import
+sudo chmod 644 /etc/apt/trusted.gpg.d/scalasbt-release.gpg
+sudo apt-get update
+sudo apt-get install sbt
+```
+
+3. Now copy the LogGenerator folder to the EC2 instance using the following command:
+
+`scp -i "ec2-dhwanit.pem" -r path\LogFileGenerator\* ubuntu@ec2-18-216-6-187.us-east-2.compute.amazonaws.com:path`
+
+4. Change the config file to select the correct bucket and rollover time. Then run the `sbt run` command to start the LogGenerator. This will generate the log files
+and copy the same to the S3 bucket mentioned in the config file.
+
+### Task 2 : Lambda Function
+1. Clone this repository using `git clone` command.
+2. Compile and create a jar using the command `sbt clean compile assembly`. This will create the jar file in the following path `target\scala-2.13`.
+3. Create a Lambda function as shown in the video, and create an API Gateway
+4. In the Lambda function edit the handler to the following `Gateway::handleRequest`.
+5. Test the Lambda function, using the testing function in API Gateway test utility using the JSON API template:
+```
+{
+   "interval" : "00:02:00",
+   "time" : "2022-10-28-19-22-00-000",
+   "pattern" : "Rsxg"
+}
+```
+
+### Task 3 : gRPC Server
+1. Clone this repository using `git clone` command.
+2. Go inside the sbt using the `sbt` command in the intellj terminal.
+3. To run the server, use the command `runMain grpc.grpcServer`
+
+### Task 4 : gRPC Client
+1. Clone this repository using `git clone` command.
+2. Edit the config file S3.conf `grpc` settings to setup the JSON call.
+3. Go inside the sbt using the `sbt` command in the intellj terminal.
+4. To run the client, use the command `runMain grpc.grpcClient`
+
 
 ## Log File Description
 The input file for the programs will be a log file with a specific format where each line will have a log file such as:
@@ -78,10 +131,21 @@ Created a gRPC server, which calls the Lambda function. The gRPC Server uses the
 Created a gRPC client, which calls the gRPC server. The gRPC client also uses the protobuf to define the structure for the data. The client uses ```S3.conf``` configuration file for input where the inputs are defined ```grpc``` section of the file.
 The client uses the following as inputs:
 ```
-    time = "2022-10-28-19-22-00:000"
-    detect_patter = "Rsxg"
-    interval = "00:02:00"
+time = "2022-10-28-19-22-00:000"
+detect_patter = "Rsxg"
+interval = "00:02:00"
 ```
+
+## Output
+The output will be as follows:
+1. If the pattern is found in the log files, the console of client will print out the following:
+
+`Log messages are found with hash <MD5 HASHCODE> `
+
+2. If the pattern is not found in the log files, the console of client will print out the following:
+
+`No log statements found for given parameters`
+
 ## AWS Deployment
 As shown in the video, build the file using ```sbt clean compile assembly``` to build the jar. The jar is then uploaded to the Lambda function. Use the instruction in the video to set
 and test the Lambda function.
