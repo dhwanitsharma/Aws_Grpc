@@ -17,6 +17,8 @@ Lambda is a compute service that lets you run code without provisioning or manag
 
 Link to the video : <a href="https://youtu.be/hTdQP7JUfa0" target="_blank">Video</a>
 
+Link to the LogGenerator repo <a href="https://github.com/dhwanitsharma/LogFileGenerator" target="_blank">LogGenerator Rep</a> 
+
 ## Project Structure
 The project structure is as follows:
 1. Src
